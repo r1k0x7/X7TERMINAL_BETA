@@ -12,7 +12,7 @@
 
 ## 🚀 Live Demo
 
-**[x7-terminal.vercel.app](https://x7-terminal.vercel.app)** *(deploy your own!)*
+**[x7-terminal.vercel.app](https://x7-terminal-beta.vercel.app/)** *(deploy your own!)*
 
 ---
 
