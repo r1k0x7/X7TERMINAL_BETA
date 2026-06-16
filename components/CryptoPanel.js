@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTerminalStore } from '@/lib/store';
-import { useCryptoWebSocket, useOrderBook, useFundingRate } from '@/lib/hooks';
+import { useCryptoWebSocket, useOrderBook, useFundingRate, useTradeStream } from '@/lib/hooks';
 import { ArrowUpRight, ArrowDownRight, Activity, BookOpen, Zap, BarChart3 } from 'lucide-react';
 import { formatPrice, formatNumber, formatPercentage, formatTimeAgo } from '@/lib/api';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
@@ -12,7 +12,9 @@ const TOP_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'ADA
 export default function CryptoPanel() {
   const { cryptoAssets, selectedCrypto, setSelectedCrypto } = useTerminalStore();
   const [view, setView] = useState('market');
+
   useCryptoWebSocket(TOP_SYMBOLS);
+
   const selectedAsset = cryptoAssets.find(a => a.id === selectedCrypto);
   const symbol = selectedAsset ? `${selectedAsset.symbol}USDT` : 'BTCUSDT';
 
@@ -20,30 +22,65 @@ export default function CryptoPanel() {
     <div className="space-y-4">
       <div className="terminal-panel p-4">
         <div className="flex items-center justify-between">
-          <h2 className="terminal-title flex items-center gap-2"><Activity className="w-4 h-4" />Crypto Markets</h2>
+          <h2 className="terminal-title flex items-center gap-2">
+            <Activity className="w-4 h-4" />
+            Crypto Markets
+          </h2>
           <div className="flex gap-2">
-            <button onClick={() => setView('market')} className={`px-3 py-1 text-xs rounded ${view === 'market' ? 'bg-terminal-accent text-black' : 'bg-terminal-border'}`}>Market</button>
-            <button onClick={() => setView('detail')} className={`px-3 py-1 text-xs rounded ${view === 'detail' ? 'bg-terminal-accent text-black' : 'bg-terminal-border'}`}>Detail</button>
+            <button 
+              onClick={() => setView('market')} 
+              className={`px-3 py-1 text-xs rounded ${view === 'market' ? 'bg-terminal-accent text-black' : 'bg-terminal-border'}`}
+            >
+              Market
+            </button>
+            <button 
+              onClick={() => setView('detail')} 
+              className={`px-3 py-1 text-xs rounded ${view === 'detail' ? 'bg-terminal-accent text-black' : 'bg-terminal-border'}`}
+            >
+              Detail
+            </button>
           </div>
         </div>
       </div>
+
       {view === 'market' ? (
-        <CryptoMarketView assets={cryptoAssets} onSelect={(id) => { setSelectedCrypto(id); setView('detail'); }} />
+        <CryptoMarketView 
+          assets={cryptoAssets} 
+          onSelect={(id) => { setSelectedCrypto(id); setView('detail'); }} 
+        />
       ) : (
-        <CryptoDetailView symbol={symbol} asset={selectedAsset} onBack={() => setView('market')} />
+        <CryptoDetailView 
+          symbol={symbol} 
+          asset={selectedAsset} 
+          onBack={() => setView('market')} 
+        />
       )}
     </div>
   );
 }
 
 function CryptoMarketView({ assets, onSelect }) {
+  if (!assets || assets.length === 0) {
+    return (
+      <div className="terminal-panel p-8 text-center">
+        <div className="animate-pulse text-terminal-muted">Loading crypto markets...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-3">
       {assets.map((asset) => (
-        <button key={asset.id} onClick={() => onSelect(asset.id)} className="terminal-panel p-4 text-left hover:border-terminal-accent transition-colors">
+        <button 
+          key={asset.id} 
+          onClick={() => onSelect(asset.id)} 
+          className="terminal-panel p-4 text-left hover:border-terminal-accent transition-colors"
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-terminal-border flex items-center justify-center text-lg font-bold">{asset.symbol[0]}</div>
+              <div className="w-10 h-10 rounded-full bg-terminal-border flex items-center justify-center text-lg font-bold">
+                {asset.symbol[0]}
+              </div>
               <div>
                 <div className="font-semibold text-terminal-text">{asset.name}</div>
                 <div className="text-xs text-terminal-muted">{asset.symbol}</div>
@@ -65,7 +102,13 @@ function CryptoMarketView({ assets, onSelect }) {
             <div className="mt-2 h-12">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={asset.sparkline.map((p, i) => ({ value: p, index: i }))}>
-                  <Line type="monotone" dataKey="value" stroke={asset.change24h >= 0 ? '#00ff88' : '#ff4757'} strokeWidth={1.5} dot={false} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="value" 
+                    stroke={asset.change24h >= 0 ? '#00ff88' : '#ff4757'} 
+                    strokeWidth={1.5} 
+                    dot={false} 
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -81,9 +124,15 @@ function CryptoDetailView({ symbol, asset, onBack }) {
   const { cryptoTrades } = useTerminalStore();
   const funding = useFundingRate(symbol);
 
+  // Enable trade stream for selected symbol
+  useTradeStream(symbol);
+
   return (
     <div className="space-y-4">
-      <button onClick={onBack} className="text-terminal-accent text-sm hover:underline">← Back to Market</button>
+      <button onClick={onBack} className="text-terminal-accent text-sm hover:underline">
+        ← Back to Market
+      </button>
+
       {asset && (
         <div className="terminal-panel p-4">
           <div className="flex items-center justify-between">
@@ -98,47 +147,75 @@ function CryptoDetailView({ symbol, asset, onBack }) {
           </div>
         </div>
       )}
+
       <div className="terminal-panel p-4">
-        <h3 className="terminal-title flex items-center gap-2 mb-3"><BookOpen className="w-4 h-4" />Order Book</h3>
+        <h3 className="terminal-title flex items-center gap-2 mb-3">
+          <BookOpen className="w-4 h-4" />
+          Order Book
+        </h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-xs text-terminal-accent mb-2">BIDS</p>
-            {orderBook.bids.map(([price, qty], i) => (
-              <div key={i} className="flex justify-between text-xs font-mono">
-                <span className="text-terminal-accent">{formatPrice(price)}</span>
-                <span className="text-terminal-muted">{qty.toFixed(4)}</span>
-              </div>
-            ))}
+            {orderBook.bids.length > 0 ? (
+              orderBook.bids.map(([price, qty], i) => (
+                <div key={i} className="flex justify-between text-xs font-mono">
+                  <span className="text-terminal-accent">{formatPrice(price)}</span>
+                  <span className="text-terminal-muted">{qty.toFixed(4)}</span>
+                </div>
+              ))
+            ) : (
+              <div className="text-xs text-terminal-muted">Loading...</div>
+            )}
           </div>
           <div>
             <p className="text-xs text-terminal-danger mb-2">ASKS</p>
-            {orderBook.asks.map(([price, qty], i) => (
-              <div key={i} className="flex justify-between text-xs font-mono">
-                <span className="text-terminal-danger">{formatPrice(price)}</span>
-                <span className="text-terminal-muted">{qty.toFixed(4)}</span>
-              </div>
-            ))}
+            {orderBook.asks.length > 0 ? (
+              orderBook.asks.map(([price, qty], i) => (
+                <div key={i} className="flex justify-between text-xs font-mono">
+                  <span className="text-terminal-danger">{formatPrice(price)}</span>
+                  <span className="text-terminal-muted">{qty.toFixed(4)}</span>
+                </div>
+              ))
+            ) : (
+              <div className="text-xs text-terminal-muted">Loading...</div>
+            )}
           </div>
         </div>
       </div>
+
       <div className="terminal-panel p-4">
-        <h3 className="terminal-title flex items-center gap-2 mb-3"><Zap className="w-4 h-4" />Recent Trades</h3>
+        <h3 className="terminal-title flex items-center gap-2 mb-3">
+          <Zap className="w-4 h-4" />
+          Recent Trades
+        </h3>
         <div className="space-y-1 max-h-48 overflow-y-auto">
-          {cryptoTrades.slice(0, 20).map((trade, i) => (
-            <div key={i} className="flex justify-between text-xs font-mono">
-              <span className={trade.isBuyer ? 'text-terminal-accent' : 'text-terminal-danger'}>{trade.isBuyer ? 'BUY' : 'SELL'}</span>
-              <span>{formatPrice(trade.price)}</span>
-              <span className="text-terminal-muted">{trade.quantity.toFixed(4)}</span>
-              <span className="text-terminal-muted">{formatTimeAgo(trade.time)}</span>
-            </div>
-          ))}
+          {cryptoTrades.length > 0 ? (
+            cryptoTrades.slice(0, 20).map((trade, i) => (
+              <div key={i} className="flex justify-between text-xs font-mono">
+                <span className={trade.isBuyer ? 'text-terminal-accent' : 'text-terminal-danger'}>
+                  {trade.isBuyer ? 'BUY' : 'SELL'}
+                </span>
+                <span>{formatPrice(trade.price)}</span>
+                <span className="text-terminal-muted">{trade.quantity.toFixed(4)}</span>
+                <span className="text-terminal-muted">{formatTimeAgo(trade.time)}</span>
+              </div>
+            ))
+          ) : (
+            <div className="text-xs text-terminal-muted">Waiting for trades...</div>
+          )}
         </div>
       </div>
+
       {funding && (
         <div className="terminal-panel p-4">
-          <h3 className="terminal-title flex items-center gap-2 mb-2"><BarChart3 className="w-4 h-4" />Funding Rate</h3>
+          <h3 className="terminal-title flex items-center gap-2 mb-2">
+            <BarChart3 className="w-4 h-4" />
+            Funding Rate
+          </h3>
           <p className="font-mono text-lg">{(parseFloat(funding.fundingRate) * 100).toFixed(4)}%</p>
-          <p className="text-xs text-terminal-muted">Next Funding: {new Date(funding.fundingTime).toLocaleString()}</p>
+          <p className="text-xs text-terminal-muted">
+            Next Funding: {new Date(funding.fundingTime).toLocaleString()}
+          </p>
         </div>
       )}
     </div>
