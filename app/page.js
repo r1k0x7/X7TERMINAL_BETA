@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useTerminalStore } from '@/lib/store';
 import { useCryptoMarkets, useStockData, useForexData, useNewsData } from '@/lib/hooks';
 import TickerBar from '@/components/TickerBar';
@@ -13,22 +14,32 @@ import WorldMonitorPanel from '@/components/WorldMonitorPanel';
 import LoadingScreen from '@/components/LoadingScreen';
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false);
   const { activeTab, isLoading } = useTerminalStore();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useCryptoMarkets();
   useStockData(['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA', 'META', 'NFLX']);
   useForexData();
   useNewsData();
 
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return <LoadingScreen />;
+  }
+
   if (isLoading) {
     return <LoadingScreen />;
   }
 
   return (
-    <main className="min-h-screen bg-terminal-bg pb-20">
+    <main style={{ backgroundColor: '#0a0a0f', minHeight: '100vh', paddingBottom: '80px' }}>
       <TickerBar />
 
-      <div className="p-4 space-y-4">
+      <div style={{ padding: '16px' }}>
         {activeTab === 'crypto' && <CryptoPanel />}
         {activeTab === 'stocks' && <StockPanel />}
         {activeTab === 'forex' && <ForexPanel />}
