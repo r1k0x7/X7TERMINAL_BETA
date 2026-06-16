@@ -14,7 +14,14 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-sans antialiased bg-terminal-bg text-terminal-text min-h-screen">
+      <body 
+        style={{ 
+          fontFamily: "'Inter', sans-serif",
+          backgroundColor: '#0a0a0f',
+          color: '#e0e0e0'
+        }} 
+        className="antialiased min-h-screen"
+      >
         {children}
       </body>
     </html>
