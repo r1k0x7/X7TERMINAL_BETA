@@ -1,4 +1,4 @@
-import './globals.css';  // ← TAMBAH INI!
+import './globals.css';
 
 export const metadata = {
   title: "X7 Terminal - Real-time Financial Dashboard",
@@ -24,5 +24,4 @@ export default function RootLayout({ children }) {
       </body>
     </html>
   );
-            }
-
+}
