@@ -12,38 +12,72 @@ export default function TickerBar() {
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+
     let animationId;
     let scrollPos = 0;
+
     const animate = () => {
       scrollPos += 0.5;
       if (scrollPos >= el.scrollWidth / 2) scrollPos = 0;
       el.scrollLeft = scrollPos;
       animationId = requestAnimationFrame(animate);
     };
+
     animationId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animationId);
   }, []);
 
+  // Safely build tickers with null checks
   const allTickers = [
-    ...cryptoAssets.slice(0, 10).map(c => ({ symbol: c.symbol, price: c.price, change: c.change24h, type: 'crypto' })),
-    ...stockAssets.slice(0, 5).map(s => ({ symbol: s.symbol, price: s.price, change: s.changePercent, type: 'stock' })),
-    ...forexRates.slice(0, 5).map(f => ({ symbol: f.pair, price: f.rate, change: 0, type: 'forex' })),
+    ...(cryptoAssets || []).slice(0, 10).map(c => ({ 
+      symbol: c.symbol || '???', 
+      price: c.price || 0, 
+      change: c.change24h || 0, 
+      type: 'crypto' 
+    })),
+    ...(stockAssets || []).slice(0, 5).map(s => ({ 
+      symbol: s.symbol || '???', 
+      price: s.price || 0, 
+      change: s.changePercent || 0, 
+      type: 'stock' 
+    })),
+    ...(forexRates || []).slice(0, 5).map(f => ({ 
+      symbol: f.pair || '???', 
+      price: f.rate || 0, 
+      change: 0, 
+      type: 'forex' 
+    })),
   ];
+
+  // Duplicate for infinite scroll effect
+  const tickers = [...allTickers, ...allTickers];
 
   return (
     <div className="bg-terminal-panel border-b border-terminal-border h-10 flex items-center overflow-hidden">
       <div className="flex items-center px-3 border-r border-terminal-border shrink-0">
-        {isWsConnected ? <Wifi className="w-4 h-4 text-terminal-accent" /> : <WifiOff className="w-4 h-4 text-terminal-danger" />}
+        {isWsConnected ? (
+          <Wifi className="w-4 h-4 text-terminal-accent" />
+        ) : (
+          <WifiOff className="w-4 h-4 text-terminal-danger" />
+        )}
         <span className="ml-2 text-xs font-mono text-terminal-accent">X7</span>
       </div>
       <div ref={scrollRef} className="flex-1 overflow-hidden whitespace-nowrap">
         <div className="inline-flex items-center space-x-6 px-4">
-          {[...allTickers, ...allTickers].map((ticker, i) => (
+          {tickers.map((ticker, i) => (
             <div key={`${ticker.symbol}-${i}`} className="flex items-center space-x-2">
-              <span className="text-xs font-mono font-semibold text-terminal-text">{ticker.symbol}</span>
-              <span className="text-xs font-mono text-terminal-muted">{formatPrice(ticker.price)}</span>
+              <span className="text-xs font-mono font-semibold text-terminal-text">
+                {ticker.symbol}
+              </span>
+              <span className="text-xs font-mono text-terminal-muted">
+                {formatPrice(ticker.price)}
+              </span>
               <span className={`flex items-center text-xs ${ticker.change >= 0 ? 'text-terminal-accent' : 'text-terminal-danger'}`}>
-                {ticker.change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                {ticker.change >= 0 ? (
+                  <TrendingUp className="w-3 h-3" />
+                ) : (
+                  <TrendingDown className="w-3 h-3" />
+                )}
                 {formatPercentage(ticker.change)}
               </span>
             </div>
