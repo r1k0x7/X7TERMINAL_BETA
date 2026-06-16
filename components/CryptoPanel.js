@@ -78,7 +78,24 @@ function CryptoMarketView({ assets, onSelect }) {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-terminal-border flex items-center justify-center text-lg font-bold">
+              {/* ICON CRYPTO ASLI DARI COINGECKO */}
+              {asset.image ? (
+                <img 
+                  src={asset.image} 
+                  alt={asset.symbol}
+                  className="w-10 h-10 rounded-full"
+                  loading="lazy"
+                  onError={(e) => {
+                    // Fallback ke huruf kalau image gagal load
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div 
+                className="w-10 h-10 rounded-full bg-terminal-border flex items-center justify-center text-lg font-bold"
+                style={{ display: asset.image ? 'none' : 'flex' }}
+              >
                 {asset.symbol[0]}
               </div>
               <div>
@@ -124,7 +141,6 @@ function CryptoDetailView({ symbol, asset, onBack }) {
   const { cryptoTrades } = useTerminalStore();
   const funding = useFundingRate(symbol);
 
-  // Enable trade stream for selected symbol
   useTradeStream(symbol);
 
   return (
@@ -135,14 +151,21 @@ function CryptoDetailView({ symbol, asset, onBack }) {
 
       {asset && (
         <div className="terminal-panel p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-xl font-bold">{asset.name} ({asset.symbol})</h3>
-              <p className="text-3xl font-mono font-bold">${formatPrice(asset.price)}</p>
-            </div>
-            <div className={`text-right ${asset.change24h >= 0 ? 'text-terminal-accent' : 'text-terminal-danger'}`}>
-              <p className="text-2xl font-mono">{formatPercentage(asset.change24h)}</p>
-              <p className="text-sm text-terminal-muted">24h Change</p>
+          <div className="flex items-center gap-3">
+            {asset.image && (
+              <img src={asset.image} alt={asset.symbol} className="w-12 h-12 rounded-full" />
+            )}
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold">{asset.name} ({asset.symbol})</h3>
+                  <p className="text-3xl font-mono font-bold">${formatPrice(asset.price)}</p>
+                </div>
+                <div className={`text-right ${asset.change24h >= 0 ? 'text-terminal-accent' : 'text-terminal-danger'}`}>
+                  <p className="text-2xl font-mono">{formatPercentage(asset.change24h)}</p>
+                  <p className="text-sm text-terminal-muted">24h Change</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
