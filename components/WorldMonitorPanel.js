@@ -1,80 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Globe, Droplets, Wind } from 'lucide-react';
-import { fetchEarthquakes, fetchWeather } from '@/lib/api';
-
-const CITIES = ['New York', 'London', 'Tokyo', 'Singapore', 'Sydney', 'Dubai'];
+import { useWorldData } from '@/lib/hooks';
 
 export default function WorldMonitorPanel() {
-  const [earthquakes, setEarthquakes] = useState([]);
-  const [weather, setWeather] = useState([]);
   const [activeView, setActiveView] = useState('earthquakes');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let isActive = true;
-
-    const fetchData = async () => {
-      if (!isActive) return;
-      setLoading(true);
-
-      try {
-        // Fetch earthquakes
-        const eqData = await fetchEarthquakes('day');
-        if (isActive) {
-          setEarthquakes(
-            eqData.map((eq) => ({
-              mag: eq.properties?.mag || 0,
-              place: eq.properties?.place || 'Unknown',
-              time: eq.properties?.time || Date.now(),
-              lat: eq.geometry?.coordinates?.[1] || 0,
-              lon: eq.geometry?.coordinates?.[0] || 0,
-            }))
-          );
-        }
-
-        // Fetch weather for cities
-        const weatherData = await Promise.all(
-          CITIES.map(async (city) => {
-            try {
-              const data = await fetchWeather(city);
-              if (!data) return null;
-              return {
-                city,
-                temp: data.main?.temp || 0,
-                condition: data.weather?.[0]?.main || 'Unknown',
-                humidity: data.main?.humidity || 0,
-                wind: data.wind?.speed || 0,
-              };
-            } catch (err) {
-              return null;
-            }
-          })
-        );
-
-        if (isActive) {
-          setWeather(weatherData.filter(Boolean));
-        }
-      } catch (err) {
-        console.warn('WorldMonitor fetch error:', err);
-      } finally {
-        if (isActive) setLoading(false);
-      }
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 300000);
-    return () => {
-      isActive = false;
-      clearInterval(interval);
-    };
-  }, []);
+  const { earthquakes, weather, loading } = useWorldData();
 
   if (loading) {
     return (
-      <div className="terminal-panel p-8 text-center">
-        <div className="animate-pulse text-terminal-muted">Loading world data...</div>
+      <div className="space-y-4">
+        <div className="terminal-panel p-4">
+          <h2 className="terminal-title flex items-center gap-2">
+            <Globe className="w-4 h-4" />
+            World Monitor
+          </h2>
+        </div>
+        <div className="terminal-panel p-8 text-center">
+          <div className="animate-pulse text-terminal-muted">Loading world data...</div>
+        </div>
       </div>
     );
   }
@@ -141,7 +86,7 @@ export default function WorldMonitorPanel() {
         <div className="grid gap-3">
           {weather.length === 0 ? (
             <div className="terminal-panel p-4 text-center text-terminal-muted">
-              Add OpenWeatherMap API key for weather data
+              Loading weather data...
             </div>
           ) : (
             weather.map((w) => (

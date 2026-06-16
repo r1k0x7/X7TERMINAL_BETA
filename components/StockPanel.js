@@ -1,11 +1,13 @@
 'use client';
 
 import { useTerminalStore } from '@/lib/store';
-import { ArrowUpRight, ArrowDownRight, Building2, Newspaper } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Building2, Newspaper, Info } from 'lucide-react';
 import { formatPrice, formatPercentage, formatNumber } from '@/lib/api';
 
 export default function StockPanel() {
   const { stockAssets, newsItems } = useTerminalStore();
+
+  const hasRealData = stockAssets.length > 0 && stockAssets[0].price > 0;
 
   return (
     <div className="space-y-4">
@@ -16,10 +18,17 @@ export default function StockPanel() {
         </h2>
       </div>
 
+      {!hasRealData && (
+        <div className="terminal-panel p-3 flex items-center gap-2 text-xs text-terminal-warning">
+          <Info className="w-4 h-4" />
+          <span>Using demo data. Add Finnhub API key for real-time quotes.</span>
+        </div>
+      )}
+
       <div className="grid gap-3">
         {(!stockAssets || stockAssets.length === 0) ? (
           <div className="terminal-panel p-4 text-center text-terminal-muted">
-            Add Finnhub API key to .env.local for stock data
+            Loading stock data...
           </div>
         ) : (
           stockAssets.map((stock) => (
@@ -57,7 +66,7 @@ export default function StockPanel() {
         <div className="space-y-3 max-h-96 overflow-y-auto">
           {(!newsItems || newsItems.length === 0) ? (
             <div className="text-center text-terminal-muted text-sm">
-              No news available
+              Loading news...
             </div>
           ) : (
             newsItems.slice(0, 10).map((news) => (
