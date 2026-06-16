@@ -17,29 +17,27 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const { activeTab, isLoading } = useTerminalStore();
 
+  // Prevent hydration mismatch - only run hooks after mount
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Only initialize data fetching on client side
   useCryptoMarkets();
   useStockData(['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA', 'META', 'NFLX']);
   useForexData();
   useNewsData();
 
-  // Prevent hydration mismatch
-  if (!mounted) {
-    return <LoadingScreen />;
-  }
-
-  if (isLoading) {
+  // Show loading screen until mounted and data is ready
+  if (!mounted || isLoading) {
     return <LoadingScreen />;
   }
 
   return (
-    <main style={{ backgroundColor: '#0a0a0f', minHeight: '100vh', paddingBottom: '80px' }}>
+    <main className="min-h-screen bg-terminal-bg pb-20">
       <TickerBar />
 
-      <div style={{ padding: '16px' }}>
+      <div className="p-4 space-y-4">
         {activeTab === 'crypto' && <CryptoPanel />}
         {activeTab === 'stocks' && <StockPanel />}
         {activeTab === 'forex' && <ForexPanel />}
